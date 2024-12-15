@@ -20,7 +20,7 @@ impl From<(rlim_t, rlim_t)> for ResourceLimit {
     }
 }
 
-pub fn to_resource(name: &'static str) -> Resource {
+pub fn to_resource(name: &str) -> Resource {
     match name {
         #[cfg(any(target_os = "android", target_os = "linux"))]
         "nice" => Resource::RLIMIT_NICE,

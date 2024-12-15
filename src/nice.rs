@@ -1,6 +1,5 @@
 use nix::errno::Errno;
 use nix::libc::{getpriority, setpriority, PRIO_PROCESS};
-use pgrx::pg_extern;
 use std::ffi::c_int;
 
 fn get_process_nice() -> nix::Result<i32> {
@@ -31,7 +30,7 @@ fn set_process_nice(prio: i32) -> nix::Result<()> {
 /// 15
 /// ```
 ///
-#[pg_extern]
+#[inline(always)]
 pub fn pgnice_get_backend_nice() -> i32 {
     let result = get_process_nice();
     crate::utils::handle_result(result)
@@ -53,7 +52,7 @@ pub fn pgnice_get_backend_nice() -> i32 {
 /// ```sql
 /// SELECT pgnice_set_backend_nice(15);
 /// ```
-#[pg_extern]
+#[inline(always)]
 pub fn pgnice_set_backend_nice(prio: i32) {
     let result = set_process_nice(prio);
     crate::utils::handle_result(result);

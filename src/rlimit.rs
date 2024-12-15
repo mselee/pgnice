@@ -2,7 +2,6 @@ use crate::utils;
 use crate::utils::ResourceLimit;
 use nix::libc::rlim_t;
 use nix::sys::resource::{getrlimit, setrlimit, Resource};
-use pgrx::pg_extern;
 
 fn set_process_resource(resource: Resource, soft: i64, hard: i64) -> nix::Result<()> {
     setrlimit(resource, soft as rlim_t, hard as rlim_t)
@@ -54,8 +53,8 @@ fn get_process_resource(resource: Resource) -> nix::Result<ResourceLimit> {
 /// SELECT pgnice_get_backend_rlimit('data');
 /// {"soft":18446744073709551615,"hard":18446744073709551615}
 /// ```
-#[pg_extern]
-pub fn pgnice_get_backend_rlimit(name: &'static str) -> ResourceLimit {
+#[inline(always)]
+pub fn pgnice_get_backend_rlimit(name: &str) -> ResourceLimit {
     let result = get_process_resource(utils::to_resource(name));
     utils::handle_result(result)
 }
@@ -98,8 +97,8 @@ pub fn pgnice_get_backend_rlimit(name: &'static str) -> ResourceLimit {
 /// ```sql
 /// SELECT pgnice_set_backend_rlimit('data', 1024 * 50);
 /// ```
-#[pg_extern]
-pub fn pgnice_set_backend_rlimit(name: &'static str, limit: i64) {
+#[inline(always)]
+pub fn pgnice_set_backend_rlimit(name: &str, limit: i64) {
     let result = set_process_resource(utils::to_resource(name), limit, limit);
     utils::handle_result(result);
 }

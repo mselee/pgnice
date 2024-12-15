@@ -2,22 +2,32 @@
 name = "pgnice"
 version = "0.0.0"
 edition = "2021"
+publish = false
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "lib"]
+path = "src/lib.rs"
+
+[[bin]]
+name = "pgrx_embed_pgnice"
+path = "./src/bin/pgrx_embed.rs"
 
 [features]
-default = ["pg15"]
+default = ["pg17"]
+pg13 = ["pgrx/pg13", "pgrx-tests/pg13"]
+pg14 = ["pgrx/pg14", "pgrx-tests/pg14"]
 pg15 = ["pgrx/pg15", "pgrx-tests/pg15"]
+pg16 = ["pgrx/pg16", "pgrx-tests/pg16"]
+pg17 = ["pgrx/pg17", "pgrx-tests/pg17"]
 pg_test = []
 
 [dependencies]
 nix = "0.26.2"
-pgrx = "=0.8.1"
+pgrx = "0.12.9"
 serde = "1.0.160"
 
 [dev-dependencies]
-pgrx-tests = "=0.8.1"
+pgrx-tests = "0.12.9"
 
 [profile.dev]
 panic = "unwind"

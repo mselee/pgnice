@@ -1,7 +1,6 @@
 use crate::ioprio::{get_priority, set_priority, Class, Priority, Target};
 use crate::utils;
 use nix::unistd::Pid;
-use pgrx::pg_extern;
 
 fn get_process_ionice() -> nix::Result<Priority> {
     let target = Target::Process(Pid::from_raw(0));
@@ -33,8 +32,8 @@ fn set_process_ionice(class: char, level: i32) -> nix::Result<()> {
 /// SELECT pgnice_get_backend_ionice();
 /// {"class":"best-effort","level":0}
 /// ```
-#[pg_extern]
-pub fn pgnice_get_backend_ionice() -> &'static str {
+#[inline(always)]
+pub fn pgnice_get_backend_ionice<'a>() -> &'a str {
     let result = get_process_ionice();
     match utils::handle_result(result).class() {
         Class::Realtime(priority) => match priority.level() {
@@ -84,7 +83,7 @@ pub fn pgnice_get_backend_ionice() -> &'static str {
 /// ```sql
 /// SELECT pgnice_set_backend_ionice('B', 0);
 /// ```
-#[pg_extern]
+#[inline(always)]
 pub fn pgnice_set_backend_ionice(class: char, level: i32) {
     let result = set_process_ionice(class, level);
     utils::handle_result(result);

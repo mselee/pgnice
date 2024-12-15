@@ -11,44 +11,77 @@
 //!
 //! In the case of pgbouncer, you will need to set a different `connect_query` for each pool to apply the desired limits.
 //!
+//! Available functions:
+//! - `pgnice.get_backend_ionice()`
+//! - `pgnice.set_backend_ionice(class, level)`
+//! - `pgnice.get_backend_nice()`
+//! - `pgnice.set_backend_nice(prio)`
+//! - `pgnice.get_backend_rlimit(name)`
+//! - `pgnice.set_backend_rlimit(name, limit)`
 pub mod ionice;
 mod ioprio;
 pub mod nice;
 pub mod rlimit;
 mod utils;
 
-use crate::ioprio::{get_priority, set_priority, Priority, Target};
-use ioprio::{BePriorityLevel, Class, RtPriorityLevel};
-use nix::errno::Errno;
-use nix::libc::{getpriority, setpriority, PRIO_PROCESS};
-use nix::sys::resource::{getrlimit, rlim_t, setrlimit, Resource};
-use nix::unistd::Pid;
 use pgrx::prelude::*;
-use serde::{Deserialize, Serialize};
-use std::ffi::c_int;
 use utils::ResourceLimit;
 
 pg_module_magic!();
 
+#[pg_schema]
+mod pgnice {
+    use super::*;
+
+    #[pg_extern]
+    pub fn get_backend_ionice() -> &'static str {
+        crate::ionice::pgnice_get_backend_ionice()
+    }
+
+    #[pg_extern]
+    pub fn set_backend_ionice(class: char, level: i32) {
+        crate::ionice::pgnice_set_backend_ionice(class, level)
+    }
+
+    #[pg_extern]
+    pub fn get_backend_nice() -> i32 {
+        crate::nice::pgnice_get_backend_nice()
+    }
+
+    #[pg_extern]
+    pub fn set_backend_nice(prio: i32) {
+        crate::nice::pgnice_set_backend_nice(prio);
+    }
+
+    #[pg_extern]
+    pub fn get_backend_rlimit(name: &str) -> ResourceLimit {
+        crate::rlimit::pgnice_get_backend_rlimit(name)
+    }
+
+    #[pg_extern]
+    pub fn set_backend_rlimit(name: &str, limit: i64) {
+        crate::rlimit::pgnice_set_backend_rlimit(name, limit);
+    }
+}
+
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
-    use crate::ioprio::{BePriorityLevel, Class};
     use pgrx::prelude::*;
 
     #[pg_test]
     fn test_set_nice() {
         let expected = 15;
-        crate::nice::pgnice_set_backend_nice(expected);
-        let current = crate::nice::pgnice_get_backend_nice();
+        crate::pgnice::set_backend_nice(expected);
+        let current = crate::pgnice::get_backend_nice();
         assert_eq!(expected, current);
     }
 
     #[pg_test]
     fn test_get_ionice() {
-        let expected = Class::BestEffort(BePriorityLevel::from_level(7).unwrap());
-        crate::ionice::pgnice_set_backend_ionice('B', 7);
-        let current = crate::ionice::pgnice_get_backend_ionice();
+        let expected = "best-effort: 7";
+        crate::pgnice::set_backend_ionice('B', 7);
+        let current = crate::pgnice::get_backend_ionice();
         assert_eq!(expected, current);
     }
 }
